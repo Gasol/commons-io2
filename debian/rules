@@ -1,0 +1,29 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+export JAVA_HOME=/usr/lib/jvm/default-java
+
+DEB_UPSTREAM_VERSION=$(shell dpkg-parsechangelog | sed -rne 's,^Version: ([^-]+).*,\1,p')
+#PACKAGE := $(DEB_SOURCE_PACKAGE)
+#VERSION := $(DEB_UPSTREAM_VERSION)
+
+%:
+	dh $@ --with maven_repo_helper
+
+override_dh_auto_build:
+	ant jar javadoc -Dcomponent.version=$(DEB_UPSTREAM_VERSION)
+	dh_auto_build
+
+override_dh_auto_clean:
+	-rm debian/libcommons-io2-java.poms
+	dh_auto_clean
+
+override_dh_auto_install:
+	sed -e "s|__VERSION__|$(DEB_UPSTREAM_VERSION)|g" \
+		< debian/libcommons-io2-java.poms.in > debian/libcommons-io2-java.poms
+	dh_auto_install
+
+get-orig-source:
+	-uscan --upstream-version 0 --rename
